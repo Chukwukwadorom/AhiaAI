@@ -3,12 +3,25 @@ import json
 
 # Demographics Table
 class Demographics(models.Model):
+    EDUCATION_LEVEL_CHOICES = [
+        ('NO_EDUCATION', 'No Formal Education'),
+        ('PRIMARY', 'Primary Education'),
+        ('SECONDARY', 'Secondary Education'),
+        ('COLLEGE', 'College'),
+        ('POSTGRAD', 'Postgraduate'),
+    ]
+
     location_name = models.CharField(max_length=255)
     latitude = models.FloatField()
     longitude = models.FloatField()
     median_income = models.FloatField()
     population_density = models.FloatField()
-    education_level = models.FloatField()
+    education_level =  models.CharField(
+        max_length=15,
+        choices=EDUCATION_LEVEL_CHOICES,
+        default='SECONDARY',
+        help_text="Dominant education level in the demographic."
+    )
     employment_rate = models.FloatField()
     urban_rural = models.CharField(max_length=50, choices=[('Urban', 'Urban'), ('Rural', 'Rural')])
     # ethnicity_distribution = models.JSONField()  # Store ethnicities as a JSON object
