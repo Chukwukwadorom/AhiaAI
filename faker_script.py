@@ -1,7 +1,7 @@
 from faker import Faker
 import requests
 import random
-from backend.models import Demographics, Retailer, Product, Sale
+# from backend.models import Demographics, Retailer, Product, Sale
 
 host = "http://localhost:8000/"
 
@@ -21,33 +21,44 @@ class AhiaFaker:
             "employment_rate": random.uniform(50, 100),
             "urban_rural": random.choice(['Urban', 'Rural']),
         }
-        url = f"{host}/api/save-demographics/"
-        response = requests.post(url, json=self.demographic_data)
+        url = f"{host}/save-demographics/"
+        response = requests.post(url, json=[self.demographic_data])
 
         print("Status Code:", response.status_code)
         print("Response JSON:", response.json())
 
     
     def retail_faker(self):
-        demographics = random.choice(Demographics.objects.all())  
-        retailer = Retailer.objects.create(
-            name=self.fake.company(),
-            demographics=demographics,
-        )
-        return retailer
+        url_dem  = f"{host}/demographics/"
+        url_ret = f"{host}/save-retailers/"
+        
+        response = requests.get(url_dem)
+
+        if response.status_code != 200:
+            raise ValueError("Failed to fetch demographics from the API.")
+
+        print("Status Code:", response.status_code)
+        demographs = response.json()
+       
+        demographics = random.choice(demographs)  
+        retailer = {
+            "name":self.fake.company(),
+            "demographics":demographics,
+        }
+        
 
     def product_faker(self):
-        product = Product.objects.create(
-            name=self.fake.word().capitalize(),
-            description=self.fake.sentence(),
-            price=random.uniform(10, 1000),
-        )
+        product = {
+            "name" :self.fake.word().capitalize(),
+            "description":self.fake.sentence(),
+            "price":random.uniform(10, 1000),
+        }
         return product
 
     def sale_faker(self):
-        retailers = Retailer.objects.all()
-        products = Product.objects.all()
-        if not retailers.exists() or not products.exists():
+        url_retailers  = f"{host}/api/retailers/"
+        url_products  = f"{host}/api/products/"
+        if not url_retailers or not url_products:
             print("Populate Retailer and Product tables first!")
             return None
         
@@ -66,11 +77,11 @@ ahia = AhiaFaker()
 for _ in range(10):  # Generate 10 demographics
     ahia.dem_faker()
 
-for _ in range(50):  # Generate 50 retailers
-    ahia.retail_faker()
+# for _ in range(50):  # Generate 50 retailers
+#     ahia.retail_faker()
 
-for _ in range(100):  # Generate 100 products
-    ahia.product_faker()
+# for _ in range(100):  # Generate 100 products
+#     ahia.product_faker()
 
-for _ in range(200):  # Generate 200 sales
-    ahia.sale_faker()
+# for _ in range(200):  # Generate 200 sales
+#     ahia.sale_faker()
