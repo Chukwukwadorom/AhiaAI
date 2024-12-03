@@ -33,55 +33,81 @@ class AhiaFaker:
         url_ret = f"{host}/save-retailers/"
         
         response = requests.get(url_dem)
-
+        
         if response.status_code != 200:
             raise ValueError("Failed to fetch demographics from the API.")
 
         print("Status Code:", response.status_code)
         demographs = response.json()
        
-        demographics = random.choice(demographs)  
-        retailer = {
+        chosen_demographic = random.choice(demographs)  
+        self.retailer = {
             "name":self.fake.company(),
-            "demographics":demographics,
+            "demographics":chosen_demographic["id"]
         }
+
+        response = requests.post(url_ret, json=[self.retailer])
+
+        print("Status Code:", response.status_code)
+        print("Response JSON:", response.json())
         
 
     def product_faker(self):
+        url_prod = f"{host}/save-products/"
+
         product = {
             "name" :self.fake.word().capitalize(),
             "description":self.fake.sentence(),
             "price":random.uniform(10, 1000),
         }
-        return product
+        response = requests.post(url=url_prod, json=[product])
+        
+        print("Status Code:", response.status_code)
+        print("Response JSON:", response.json())
 
     def sale_faker(self):
-        url_retailers  = f"{host}/api/retailers/"
-        url_products  = f"{host}/api/products/"
-        if not url_retailers or not url_products:
+        url_retailers  = f"{host}/retailers/"
+        url_products  = f"{host}/products/"
+        url_sales = f"{host}/sales/"
+
+        response_retailer = requests.get(url_retailers)
+        response_products = requests.get(url_products)
+        
+        response_products.raise_for_status()
+        response_retailer.raise_for_status()
+
+        retailers = response_retailer.json()
+        products = response_products.json()
+
+        if len(retailers) < 1 or len(products) < 1:
             print("Populate Retailer and Product tables first!")
             return None
         
-        sale = Sale.objects.create(
-            retailer=random.choice(retailers),
-            product=random.choice(products),
-            quantity=random.randint(1, 50),
-            sale_date=self.fake.date_time_this_year(),
-        )
-        return sale
+        sale = {
+            "retailer":random.choice(retailers),
+            "product":random.choice(products),
+            "quantity":random.randint(1, 50),
+            "sale_date":self.fake.date_time_this_year(),
+        }
+       
+        response = requests.post(url=url_sales, json= [sale])
+        print("Status Code:", response.status_code)
+        print("Response JSON:", response.json())
 
-# Usage
-ahia = AhiaFaker()
 
-# Generate data
-for _ in range(10):  # Generate 10 demographics
-    ahia.dem_faker()
 
-# for _ in range(50):  # Generate 50 retailers
-#     ahia.retail_faker()
 
-# for _ in range(100):  # Generate 100 products
-#     ahia.product_faker()
+if __name__ == "__main__":
+    ahia = AhiaFaker()
+    
+    # for _ in range(10):  # Generate 10 demographics
+    #     ahia.dem_faker()
 
-# for _ in range(200):  # Generate 200 sales
-#     ahia.sale_faker()
+    # for _ in range(50):  # Generate 50 retailers
+    #     ahia.retail_faker()
+
+    # for _ in range(100):  # Generate 100 products
+    #     ahia.product_faker()
+
+    # for _ in range(200):  # Generate 200 sales
+    #     ahia.sale_faker()
